@@ -1,0 +1,17 @@
+{
+  "name": "ranbogmord-flow-dash",
+  "version": "1.0.1",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "tsc -w",
+    "build": "tsc"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "types-p42-flow": "^1.1.0",
+    "typescript": "^5.1.6"
+  }
+}

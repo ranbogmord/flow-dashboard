@@ -1,0 +1,7 @@
+#ranbogmord-steveo-dash {
+    display: none;
+}
+
+#ranbogmord-steveo-dash.visible {
+    display: flex;
+}
