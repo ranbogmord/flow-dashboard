@@ -902,7 +902,11 @@ let scaleRatio = canvasSize / 300;
 const widgetStore = {
     active: false,
     canvasSize: 300,
-    toggleSpeed: 237
+    toggleSpeed: 237,
+    showAltitude: false,
+    showServer: false,
+    enableHighlights: false,
+    showWind: false
 };
 this.$api.datastore.import(widgetStore);
 const ensureNumericSetting = (val, defaultValue) => {
@@ -939,6 +943,46 @@ settings_define({
             const num = ensureNumericSetting(val, 237);
             widgetStore.toggleSpeed = Math.max(0, num);
             toggleSpeed = widgetStore.toggleSpeed;
+            this.$api.datastore.export(widgetStore);
+        }
+    },
+    showAltitude: {
+        label: 'Show altitude',
+        type: 'checkbox',
+        description: 'Show altitude on top of the widget',
+        value: widgetStore.showAltitude,
+        changed: (val) => {
+            widgetStore.showAltitude = val;
+            this.$api.datastore.export(widgetStore);
+        }
+    },
+    showServer: {
+        label: 'Show MSFS server',
+        type: 'checkbox',
+        description: 'Show which MSFS server currently being used',
+        value: widgetStore.showServer,
+        changed: (val) => {
+            widgetStore.showServer = val;
+            this.$api.datastore.export(widgetStore);
+        }
+    },
+    showWind: {
+        label: 'Show wind indication',
+        type: 'checkbox',
+        description: 'Show wind direction and speed',
+        value: widgetStore.showWind,
+        changed: (val) => {
+            widgetStore.showWind = val;
+            this.$api.datastore.export(widgetStore);
+        }
+    },
+    enableHighlights: {
+        label: 'Highlight data fields',
+        type: 'checkbox',
+        description: 'Highlight certain data fields, for example server',
+        value: widgetStore.enableHighlights,
+        changed: (val) => {
+            widgetStore.enableHighlights = val;
             this.$api.datastore.export(widgetStore);
         }
     }
@@ -1004,20 +1048,28 @@ loop_30hz(() => {
     if (!ctx) {
         return;
     }
-    canvasSize = widgetStore.canvasSize || 300;
-    toggleSpeed = widgetStore.toggleSpeed || 237;
+    canvasSize = widgetStore.canvasSize;
+    toggleSpeed = widgetStore.toggleSpeed;
     scaleRatio = canvasSize / 300;
     const speed = this.$api.variables.get('A:AIRSPEED INDICATED', 'Knots');
     let heading = this.$api.variables.get('A:PLANE HEADING DEGREES GYRO', 'radians');
+    const alt = this.$api.variables.get('A:PLANE ALTITUDE', 'Feet');
+    const serverId = this.$api.community.get_server();
+    const server = this.$api.community.get_servers().find(x => x.ID === serverId);
     heading = rad2deg(heading);
-    render(ctx, speed, heading);
+    render(ctx, speed, heading, alt, server);
 });
-const render = (ctx, speed, heading) => {
+const render = (ctx, speed, heading, alt, server) => {
     ctx.clearRect(0, 0, canvasSize, canvasSize);
+    ctx.filter = 'none';
     const speedTapeBgSize = 80 * (canvasSize / 360);
     const speedTapeBgRadius = (canvasSize / 2) - (speedTapeBgSize / 2);
     ctx.beginPath();
-    ctx.arc(canvasSize / 2, canvasSize / 2, speedTapeBgRadius, deg2rad(-60), deg2rad(120));
+    let startDegrees = -60;
+    if (widgetStore.showAltitude) {
+        startDegrees = -120;
+    }
+    ctx.arc(canvasSize / 2, canvasSize / 2, speedTapeBgRadius, deg2rad(startDegrees), deg2rad(120));
     ctx.lineWidth = speedTapeBgSize;
     ctx.strokeStyle = "rgba(0, 0, 0, 0.7)";
     ctx.stroke();
@@ -1029,6 +1081,16 @@ const render = (ctx, speed, heading) => {
     ctx.strokeStyle = "rgba(255, 255, 255, 0.7)";
     ctx.stroke();
     ctx.closePath();
+    if (widgetStore.showAltitude) {
+        ctx.textAlign = "center";
+        const altitudeSize = 24 * scaleRatio;
+        ctx.font = `italic ${altitudeSize}px sans-serif`;
+        ctx.fillStyle = "#fff";
+        ctx.fillText(`${alt.toFixed(0)}`, canvasSize / 2, 25 * scaleRatio);
+        const altLabelSize = 18 * scaleRatio;
+        ctx.font = `italic ${altLabelSize}px sans-serif`;
+        ctx.fillText('ft', canvasSize / 2, 45 * scaleRatio);
+    }
     const speedLabelSize = 28 * scaleRatio;
     ctx.textAlign = "center";
     ctx.font = `italic ${speedLabelSize}px sans-serif`;
@@ -1055,6 +1117,7 @@ const render = (ctx, speed, heading) => {
         ctx.rotate(deg2rad(-24));
     }
     ctx.resetTransform();
+    ctx.fillStyle = '#fff';
     const speedTickLabelSize = 18 * scaleRatio;
     ctx.font = `${speedTickLabelSize}px sans-serif`;
     let speeds = ["0", "50", "100", "150", "200", "250"];
@@ -1066,6 +1129,99 @@ const render = (ctx, speed, heading) => {
     }
     ctx.resetTransform();
     drawCompass(ctx, heading);
+    if (widgetStore.showServer && server) {
+        drawServer(ctx, server);
+    }
+    if (widgetStore.showWind) {
+        drawWind(ctx);
+    }
+};
+const drawServer = (ctx, server) => {
+    ctx.resetTransform();
+    const speedTapeBgSize = 80 * (canvasSize / 360);
+    const speedTapeBgRadius = (canvasSize / 2) - (speedTapeBgSize / 2);
+    ctx.beginPath();
+    ctx.arc(canvasSize / 2, canvasSize / 2, speedTapeBgRadius, deg2rad(130), deg2rad(160));
+    ctx.lineWidth = speedTapeBgSize;
+    if (widgetStore.enableHighlights) {
+        ctx.strokeStyle = "rgba(6, 78, 9, 0.7)";
+    }
+    else {
+        ctx.strokeStyle = "rgba(0, 0, 0, 0.7)";
+    }
+    ctx.stroke();
+    ctx.closePath();
+    ctx.textAlign = "center";
+    const serverLabelSize = 14 * scaleRatio;
+    ctx.font = `italic ${serverLabelSize}px sans-serif`;
+    ctx.fillStyle = '#fff';
+    ctx.translate(canvasSize / 2, canvasSize / 2);
+    const rot = -34;
+    ctx.rotate(deg2rad(rot));
+    ctx.translate((-canvasSize / 2) + (speedTapeBgSize / 2), 0);
+    ctx.rotate(deg2rad(-rot));
+    ctx.fillText('Server', 0, -5 * scaleRatio);
+    const serverSize = 16 * scaleRatio;
+    ctx.font = `italic ${serverSize}px sans-serif`;
+    const fmtServerName = getServerName(server.ID);
+    ctx.fillText(fmtServerName, 5, 10 * scaleRatio);
+};
+const drawWind = (ctx) => {
+    const windDir = this.$api.variables.get('A:AMBIENT WIND DIRECTION', 'radians');
+    const windVel = this.$api.variables.get('A:AMBIENT WIND VELOCITY', 'knots');
+    ctx.resetTransform();
+    const speedTapeBgSize = 80 * (canvasSize / 360);
+    const speedTapeBgRadius = (canvasSize / 2) - (speedTapeBgSize / 2);
+    ctx.beginPath();
+    if (widgetStore.showServer) {
+        ctx.arc(canvasSize / 2, canvasSize / 2, speedTapeBgRadius, deg2rad(170), deg2rad(200));
+    }
+    else {
+        ctx.arc(canvasSize / 2, canvasSize / 2, speedTapeBgRadius, deg2rad(130), deg2rad(160));
+    }
+    ctx.lineWidth = speedTapeBgSize;
+    if (widgetStore.enableHighlights) {
+        ctx.strokeStyle = "rgba(6, 78, 9, 0.7)";
+    }
+    else {
+        ctx.strokeStyle = "rgba(0, 0, 0, 0.7)";
+    }
+    ctx.stroke();
+    ctx.closePath();
+    ctx.textAlign = "center";
+    const serverLabelSize = 14 * scaleRatio;
+    ctx.font = `italic ${serverLabelSize}px sans-serif`;
+    ctx.fillStyle = '#fff';
+    ctx.translate(canvasSize / 2, canvasSize / 2);
+    let rot = 7;
+    if (!widgetStore.showServer) {
+        rot = -34;
+    }
+    ctx.rotate(deg2rad(rot));
+    ctx.translate((-canvasSize / 2) + (speedTapeBgSize / 2), 0);
+    ctx.rotate(deg2rad(-rot));
+    ctx.fillText(`${rad2deg(windDir).toFixed(0)} deg`, 0, -5 * scaleRatio);
+    ctx.fillText(`@${windVel.toFixed(0)} kt`, 0, 10 * scaleRatio);
+};
+const getServerName = (id) => {
+    if (id === 'WestEurope') {
+        return 'W EU';
+    }
+    else if (id === 'EastUs') {
+        return 'E USA';
+    }
+    else if (id === 'NorthEurope') {
+        return 'N EU';
+    }
+    else if (id === 'WestUs') {
+        return 'W USA';
+    }
+    else if (id === 'SoutheastAsia') {
+        return 'SE A';
+    }
+    else {
+        return '-';
+    }
 };
 const drawSpeedTickLabel = (ctx, speed, degOffset) => {
     ctx.translate(canvasSize / 2, canvasSize / 2);
