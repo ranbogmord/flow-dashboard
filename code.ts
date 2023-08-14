@@ -43,7 +43,7 @@ settings_define({
         description: "Widget size expressed in pixels, default and minimum is 300px",
         value: `${widgetStore.canvasSize}`,
         changed: (val) => {
-            const num = ensureNumericSetting(val as string, 300);
+            const num = ensureNumericSetting(val, 300);
             widgetStore.canvasSize = Math.max(num, 300);
             canvasSize = widgetStore.canvasSize;
             this.$api.datastore.export(widgetStore);
@@ -56,7 +56,7 @@ settings_define({
         description: 'Speed above which the speed tape will switch from 250 to 500kt',
         value: `${widgetStore.toggleSpeed}`,
         changed: (val) => {
-            const num = ensureNumericSetting(val as string, 237);
+            const num = ensureNumericSetting(val, 237);
             widgetStore.toggleSpeed = Math.max(0, num);
             toggleSpeed = widgetStore.toggleSpeed;
             this.$api.datastore.export(widgetStore);
@@ -68,7 +68,7 @@ settings_define({
         description: 'Show altitude on top of the widget',
         value: widgetStore.showAltitude,
         changed: (val) => {
-            widgetStore.showAltitude = val as boolean;
+            widgetStore.showAltitude = val;
             this.$api.datastore.export(widgetStore);
         }
     },
@@ -78,7 +78,7 @@ settings_define({
         description: 'Show which MSFS server currently being used',
         value: widgetStore.showServer,
         changed: (val) => {
-            widgetStore.showServer = val as boolean;
+            widgetStore.showServer = val;
             this.$api.datastore.export(widgetStore);
         }
     },
@@ -88,7 +88,7 @@ settings_define({
         description: 'Show wind direction and speed',
         value: widgetStore.showWind,
         changed: (val) => {
-            widgetStore.showWind = val as boolean;
+            widgetStore.showWind = val;
             this.$api.datastore.export(widgetStore);
         }
     },
@@ -98,7 +98,7 @@ settings_define({
         description: 'Highlight certain data fields, for example server',
         value: widgetStore.enableHighlights,
         changed: (val) => {
-            widgetStore.enableHighlights = val as boolean;
+            widgetStore.enableHighlights = val;
             this.$api.datastore.export(widgetStore);
         }
     }
@@ -189,10 +189,10 @@ loop_30hz(() => {
 
     const speed = this.$api.variables.get('A:AIRSPEED INDICATED', 'Knots') as number;
     let heading = this.$api.variables.get('A:PLANE HEADING DEGREES GYRO', 'radians') as number;
-    const alt = this.$api.variables.get('A:PLANE ALTITUDE', 'Feet') as number;
+    const alt = this.$api.variables.get('A:INDICATED ALTITUDE', 'Feet') as number;
+    // const alt = this.$api.variables.get('A:PLANE ALTITUDE', 'Feet') as number;
     const serverId = this.$api.community.get_server();
     const server = this.$api.community.get_servers().find(x => x.ID === serverId);
-
 
     heading = rad2deg(heading);
     render(ctx, speed, heading, alt, server);

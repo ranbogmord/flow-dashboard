@@ -1,11 +1,12 @@
 {
   "name": "ranbogmord-flow-dash",
-  "version": "1.1.0",
+  "version": "1.2.1",
   "description": "",
   "main": "index.js",
+  "type": "module",
   "scripts": {
-    "dev": "tsc -w",
-    "build": "tsc"
+    "dev": "rollup -c rollup.config.mjs -w",
+    "build": "rollup -c rollup.config.mjs"
   },
   "keywords": [],
   "author": "",
@@ -13,5 +14,10 @@
   "dependencies": {
     "types-p42-flow": "^1.1.0",
     "typescript": "^5.1.6"
+  },
+  "devDependencies": {
+    "@rollup/plugin-typescript": "^11.1.2",
+    "rollup": "^3.28.0",
+    "tslib": "^2.6.1"
   }
 }

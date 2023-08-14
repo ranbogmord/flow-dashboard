@@ -1,8 +1,7 @@
 {
   "compilerOptions": {
     "target": "es2016",
-    "module": "amd",
-    "outFile": "./widget/code.js",
+    "module": "ESNext",
     "removeComments": true,
     "newLine": "lf",
     "esModuleInterop": true,
