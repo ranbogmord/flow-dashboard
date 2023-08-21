@@ -11,6 +11,7 @@ const widgetStore = {
     canvasSize: 300,
     toggleSpeed: 237,
     showAltitude: false,
+    indicatedAltitude: false,
     showServer: false,
     enableHighlights: false,
     showWind: false
@@ -60,6 +61,16 @@ settings_define({
         value: widgetStore.showAltitude,
         changed: (val) => {
             widgetStore.showAltitude = val;
+            this.$api.datastore.export(widgetStore);
+        }
+    },
+    indicatedAltitude: {
+        label: 'Use indicated altitude',
+        type: 'checkbox',
+        description: 'Use indicated altitude instead of true altitude',
+        value: widgetStore.indicatedAltitude,
+        changed: (val) => {
+            widgetStore.indicatedAltitude = val;
             this.$api.datastore.export(widgetStore);
         }
     },
@@ -160,7 +171,9 @@ loop_30hz(() => {
     scaleRatio = canvasSize / 300;
     const speed = this.$api.variables.get('A:AIRSPEED INDICATED', 'Knots');
     let heading = this.$api.variables.get('A:PLANE HEADING DEGREES GYRO', 'radians');
-    const alt = this.$api.variables.get('A:INDICATED ALTITUDE', 'Feet');
+    const alt = widgetStore.indicatedAltitude
+        ? this.$api.variables.get('A:INDICATED ALTITUDE', 'Feet')
+        : this.$api.variables.get('A:PLANE ALTITUDE', 'Feet');
     const serverId = this.$api.community.get_server();
     const server = this.$api.community.get_servers().find(x => x.ID === serverId);
     heading = rad2deg(heading);

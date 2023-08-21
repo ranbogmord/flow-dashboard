@@ -16,6 +16,7 @@ const widgetStore = {
     canvasSize: 300,
     toggleSpeed: 237,
     showAltitude: false,
+    indicatedAltitude: false,
     showServer: false,
     enableHighlights: false,
     showWind: false
@@ -69,6 +70,16 @@ settings_define({
         value: widgetStore.showAltitude,
         changed: (val) => {
             widgetStore.showAltitude = val;
+            this.$api.datastore.export(widgetStore);
+        }
+    },
+    indicatedAltitude: {
+        label: 'Use indicated altitude',
+        type: 'checkbox',
+        description: 'Use indicated altitude instead of true altitude',
+        value: widgetStore.indicatedAltitude,
+        changed: (val) => {
+            widgetStore.indicatedAltitude = val;
             this.$api.datastore.export(widgetStore);
         }
     },
@@ -189,14 +200,15 @@ loop_30hz(() => {
 
     const speed = this.$api.variables.get('A:AIRSPEED INDICATED', 'Knots') as number;
     let heading = this.$api.variables.get('A:PLANE HEADING DEGREES GYRO', 'radians') as number;
-    const alt = this.$api.variables.get('A:INDICATED ALTITUDE', 'Feet') as number;
-    // const alt = this.$api.variables.get('A:PLANE ALTITUDE', 'Feet') as number;
+    const alt = widgetStore.indicatedAltitude
+        ? this.$api.variables.get('A:INDICATED ALTITUDE', 'Feet') as number
+        : this.$api.variables.get('A:PLANE ALTITUDE', 'Feet') as number;
+
     const serverId = this.$api.community.get_server();
     const server = this.$api.community.get_servers().find(x => x.ID === serverId);
 
     heading = rad2deg(heading);
     render(ctx, speed, heading, alt, server);
-    // render(ctx, 150, heading, 5500, server); // for testing
 });
 
 const render = (ctx: CanvasRenderingContext2D, speed: number, heading: number, alt: number, server?: MsfsServer) => {
