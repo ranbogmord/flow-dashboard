@@ -7,6 +7,7 @@ let canvasSize = 450;
 let toggleSpeed = 237;
 let machSwapSpeed = 0.79;
 let scaleRatio = canvasSize / 300;
+let lastOpenedByTwitch = 0;
 const widgetStore = {
     active: false,
     canvasSize: 300,
@@ -21,6 +22,8 @@ const widgetStore = {
     enableMach: false,
     machSwapSpeed: 0.79,
     nrstMinRwyLength: 0,
+    twitchTimeout: 0,
+    twitchStaffOnly: false
 };
 this.$api.datastore.import(widgetStore);
 const ensureNumericSetting = (val, defaultValue) => {
@@ -162,7 +165,27 @@ settings_define({
             widgetStore.enableTwitch = val;
             this.$api.datastore.export(widgetStore);
         }
-    }
+    },
+    twitchTimeout: {
+        label: 'Twitch timeout',
+        type: 'text',
+        description: 'Sets how often chat can open the widget (in seconds). 300s = chat can open the widget every 5 minutes',
+        value: `${widgetStore.twitchTimeout}`,
+        changed: (val) => {
+            widgetStore.twitchTimeout = Math.max(0, ensureNumericSetting(val, 0));
+            this.$api.datastore.export(widgetStore);
+        }
+    },
+    twitchStaffOnly: {
+        label: 'Twitch Staff only',
+        type: 'checkbox',
+        description: 'Only Twitch mods and the broadcaster can open the widget',
+        value: widgetStore.twitchStaffOnly,
+        changed: (val) => {
+            widgetStore.twitchStaffOnly = val;
+            this.$api.datastore.export(widgetStore);
+        }
+    },
 });
 const resizeWidget = () => {
     if (widget && canvas) {
@@ -229,24 +252,32 @@ loop_30hz(() => {
     doRender(ctx);
 });
 twitch_message((message) => {
-    var _a;
+    var _a, _b;
     if (!widgetStore.enableTwitch || widgetStore.active) {
         return;
     }
-    console.log(message);
     if (((_a = message === null || message === void 0 ? void 0 : message.command) === null || _a === void 0 ? void 0 : _a.botCommand) === "dashboard") {
-        widgetStore.active = true;
-        this.$api.datastore.export(widgetStore);
-        if (widget) {
-            if (widgetStore.active) {
-                widget.classList.add('visible');
-            }
-            else {
-                widget.classList.remove('visible');
+        if (widgetStore.twitchStaffOnly) {
+            if (!((_b = message.tags.badges) === null || _b === void 0 ? void 0 : _b.broadcaster) && message.tags.mod !== "1") {
+                return;
             }
         }
-        if (canvas && (canvas.width !== canvasSize || canvas.height !== canvasSize)) {
-            resizeWidget();
+        const n = +(new Date());
+        if (n - lastOpenedByTwitch > widgetStore.twitchTimeout * 1000) {
+            lastOpenedByTwitch = +(new Date());
+            widgetStore.active = true;
+            this.$api.datastore.export(widgetStore);
+            if (widget) {
+                if (widgetStore.active) {
+                    widget.classList.add('visible');
+                }
+                else {
+                    widget.classList.remove('visible');
+                }
+            }
+            if (canvas && (canvas.width !== canvasSize || canvas.height !== canvasSize)) {
+                resizeWidget();
+            }
         }
     }
 });
