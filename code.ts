@@ -248,7 +248,6 @@ html_created((el) => {
         return;
     }
 
-    resizeWidget();
     const svgWidth = 32;
     const svgHeight = 35;
 
@@ -265,6 +264,7 @@ html_created((el) => {
 
 
     doRender(ctx);
+    resizeWidget();
 });
 
 loop_30hz(() => {

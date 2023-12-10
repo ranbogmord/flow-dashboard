@@ -228,7 +228,6 @@ html_created((el) => {
     if (!canvas) {
         return;
     }
-    resizeWidget();
     const svgWidth = 32;
     const svgHeight = 35;
     img = new Image();
@@ -241,6 +240,7 @@ html_created((el) => {
         return;
     }
     doRender(ctx);
+    resizeWidget();
 });
 loop_30hz(() => {
     if (!widgetStore.active) {
