@@ -337,7 +337,7 @@ const render = (ctx, speed, speedMach, heading, alt, server) => {
     ctx.strokeStyle = "rgba(0, 0, 0, 0.7)";
     ctx.stroke();
     ctx.closePath();
-    let maxSpeed = 250;
+    let maxSpeed = 0;
     if (showMach) {
         maxSpeed = 1;
         if (speedMach > 0.9) {
@@ -350,11 +350,14 @@ const render = (ctx, speed, speedMach, heading, alt, server) => {
             maxSpeed = 5;
         }
     }
-    else if (speed > toggleSpeed) {
-        maxSpeed = 500;
+    else {
+        maxSpeed = 250;
+        if (speed > toggleSpeed) {
+            maxSpeed = 500;
+        }
     }
     speed = Math.min(speedToShow, maxSpeed);
-    const pct = speedToShow / maxSpeed;
+    const pct = speed / maxSpeed;
     const deg = 60 - (120 * pct);
     const rads = deg2rad(deg);
     const speedTapeSize = 60 * (canvasSize / 360);

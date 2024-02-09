@@ -383,7 +383,7 @@ const render = (ctx: CanvasRenderingContext2D, speed: number, speedMach: number,
     ctx.stroke();
     ctx.closePath();
 
-    let maxSpeed = 250;
+    let maxSpeed = 0;
     if (showMach) {
         maxSpeed = 1;
 
@@ -396,13 +396,16 @@ const render = (ctx: CanvasRenderingContext2D, speed: number, speedMach: number,
         if (speedMach > 2.9) {
             maxSpeed = 5;
         }
-    } else if (speed > toggleSpeed) {
-        maxSpeed = 500;
+    } else {
+        maxSpeed = 250;
+        if (speed > toggleSpeed) {
+            maxSpeed = 500;
+        }
     }
 
     // Speed tape
     speed = Math.min(speedToShow, maxSpeed);
-    const pct = speedToShow / maxSpeed;
+    const pct = speed / maxSpeed;
     const deg = 60 - (120 * pct); // our arc is 120deg long going from 60deg to -60deg
     const rads = deg2rad(deg);
 
@@ -421,7 +424,7 @@ const render = (ctx: CanvasRenderingContext2D, speed: number, speedMach: number,
         const altitudeSize = 24 * scaleRatio;
         ctx.font = `italic ${altitudeSize}px sans-serif`;
         ctx.fillStyle = "#fff";
-        ctx.fillText(`${alt.toFixed(0)}`, canvasSize / 2, 25 * scaleRatio)
+        ctx.fillText(`${alt.toFixed(0)}`, canvasSize / 2, 25 * scaleRatio);
 
         const altLabelSize = 18 * scaleRatio;
         ctx.font = `italic ${altLabelSize}px sans-serif`;
